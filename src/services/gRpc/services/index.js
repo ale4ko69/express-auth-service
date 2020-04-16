@@ -1,6 +1,7 @@
 'use strict'
 
-const {rootPath} = require('../config')
+const {rootPath} = require('../config');
+const srcPath = `${rootPath}/src`;
 const protoOptions = {
   keepCase: true,
   longs: String,
@@ -10,11 +11,11 @@ const protoOptions = {
 }
 
 module.exports = function (grpc, protoLoader, gRpcServer, subject) {
-  const path = `${rootPath}/src/services/gRpc/proto/${subject}.proto`
+  const path = `${srcPath}/services/gRpc/proto/${subject}.proto`
   const subjectProto = protoLoader.loadSync(path, protoOptions)
   const descriptor = grpc.loadPackageDefinition(subjectProto)
   const serviceName = `${subject}Service`
-  const Service = require(`../../app/Services/${subject.toLowerCase()}`)
+  const Service = require(`${srcPath}/app/Services/${subject.toLowerCase()}`)
 
   gRpcServer.addService(descriptor[serviceName].service, {
     list: Service.lists,

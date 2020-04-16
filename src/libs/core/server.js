@@ -49,10 +49,8 @@ let server = require('http').createServer(app);
 server.listen(config.backendPort, () => {
   console.log('Express server listening on port %d', config.backendPort);
 });
-
 // init cronjob
-// require('../../app/Cronjob').start();
-
+require('../../app/Cronjob').start();
 // Expose app
 module.exports = app;
 

@@ -155,8 +155,9 @@ class AuthService extends BaseService {
 
     let [err, result] = await to(this.mToken.getOne({token: options.token}, true));
     if (err) throw Error(Utils.localizedText('Found_Errors.general', err.message));
-    if (!result || Utils.isString(result.user)) throw Error(Utils.localizedText('unauthorized'));
-
+    if (!result || Utils.isString(result.user) || result.expiredAt <= Date.now()) {
+      throw Error(Utils.localizedText('unauthorized'));
+    }
     return {token: result.token, authUser: result.user}
   }
 

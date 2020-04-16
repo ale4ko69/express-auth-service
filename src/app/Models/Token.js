@@ -2,7 +2,6 @@
 /**
  * @description Schema of Token model.
  */
-const moment = require('moment');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const BaseSchema = require('./BaseSchema');
@@ -21,7 +20,7 @@ const FIELDS = {
   },
   expiredAt: {
     type: String,
-    default: moment().add(7, 'd').format('YYYY-MM-DD')
+    default: Date.now() + 7 * 24 * 60 * 60
   },
   user: {
     type: Schema.ObjectId,
