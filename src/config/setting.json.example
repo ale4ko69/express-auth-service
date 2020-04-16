@@ -15,14 +15,5 @@
     "checker": "checker",
     "streamer": "streamer"
   },
-  "labelTypes": {
-    "asset": "assets",
-    "player": "players"
-  },
-  "groupStatus": {
-    "pending": 0,
-    "deployed": 1,
-    "approved": 2
-  },
   "passwordDefault": "123456"
 }
