@@ -24,10 +24,6 @@ class Service extends BaseService {
   async update (call, callback) {
     return super.update(call, callback)
   }
-
-  async changePassword (options) {
-
-  }
 }
 
 module.exports = new Service()

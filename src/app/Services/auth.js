@@ -64,7 +64,8 @@ class AuthService extends BaseService {
 
     let result;
     [err, result] = await to(this.mToken.insertOne({user: user._id, token: token}));
-    if (err) throw new Error(Utils.localizedText('Errors.Cannot_Login', err.message))
+    if (err) throw Error(Utils.localizedText('Errors.login', err.message));
+
     return {token, authUser: user}
   }
 
@@ -90,15 +91,84 @@ class AuthService extends BaseService {
     user = user.getFields();
     user = Utils.cloneObject(user);
     let token = AuthUtil.generateJwt(user);
+    let result;
+    [err, result] = await to(this.mToken.insertOne({user: user._id, token: token}));
+    if (err) throw Error(Utils.localizedText('Errors.login', err.message));
+
     return {token, authUser: user}
   }
 
-  async logout(options) {
+  async changePassword(options) {
+    const requireParams = ['userId', 'old_password', 'new_password'];
+    options = HttpUtil.getRequiredParamsFromJson2(options, requireParams);
+    if (options.error) throw Error(options.error);
 
+    let {userId, old_password, new_password} = options
+    if (Utils.compareString(old_password, new_password)) {
+      throw Error(Utils.localizedText('Errors.New_Old_Pw_Must_Different'))
+    }
+
+    let [err, user] = await to(this.model.getOne({_id: userId}, false, {}));
+    if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
+    if (!user || user.delete) throw Error(Utils.localizedText('Not_Exists.user', userId));
+
+    if (!AuthUtil.validPassword(user, old_password)) {
+      throw Error(Utils.localizedText('Errors.Old_Pw_Not_Match'))
+    }
+
+    let objUpdate = AuthUtil.setPassword(new_password);
+    let result;
+    [err, result] = await to(Promise.all([
+      this.model.updateOne(user._id, objUpdate),
+      this.mToken.deleteByCondition({user: user._id})
+    ]));
+    if (err) throw Error(Utils.localizedText('Errors.Change_Password', err.message));
+
+    return Utils.localizedText('Success.Change_Password')
   }
 
-  async check(options) {
+  async resetPassword(options) {
+    const requireParams = ['userId', 'new_password'];
+    options = HttpUtil.getRequiredParamsFromJson2(options, requireParams);
+    if (options.error) throw Error(options.error);
 
+    let {userId, new_password} = options;
+    let [err, user] = await to(this.model.getOne({_id: userId}, false, {}));
+    if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
+    if (!user || user.delete) throw Error(Utils.localizedText('Not_Exists.user', userId));
+
+    let objUpdate = AuthUtil.setPassword(new_password);
+    let result;
+    [err, result] = await to(Promise.all([
+      this.model.updateOne(user._id, objUpdate),
+      this.mToken.deleteByCondition({user: user._id})
+    ]));
+    if (err) throw Error(Utils.localizedText('Errors.Reset_Password', err.message));
+
+    return Utils.localizedText('Success.Reset_Password')
+  }
+
+  async checkTokens(options) {
+    const requireParams = ['token'];
+    options = HttpUtil.getRequiredParamsFromJson2(options, requireParams);
+    if (options.error) throw Error(options.error);
+
+    let [err, result] = await to(this.mToken.getOne({token: options.token}, true));
+    if (err) throw Error(Utils.localizedText('Found_Errors.general', err.message));
+    if (!result || Utils.isString(result.user)) throw Error(Utils.localizedText('unauthorized'));
+
+    return {token: result.token, authUser: result.user}
+  }
+
+  async logout(options) {
+    const requireParams = ['token'];
+    options = HttpUtil.getRequiredParamsFromJson2(options, requireParams);
+    if (options.error) throw Error(options.error);
+
+    let [err, result] = await to(this.mToken.deleteByCondition({token: options.token}));
+    if (err) throw Error(Utils.localizedText('Errors.logout', err.message));
+
+    return Utils.localizedText('Success.general')
   }
 }
 
