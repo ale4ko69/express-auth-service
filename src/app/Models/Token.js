@@ -1,14 +1,13 @@
 'use strict';
 /**
- * @description Schema of User model.
+ * @description Schema of Token model.
  */
+const moment = require('moment');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const BaseSchema = require('./BaseSchema');
-const {roles} = require('../../config');
-const Utils = require('../../utils');
 const mTAG = 'Token'
-const projection = {delete: 0, __v: 0, hash: 0, salt: 0};
+const projection = {__v: 0};
 
 const FIELDS = {
   token: {
@@ -16,8 +15,14 @@ const FIELDS = {
     required: true,
     index: true
   },
-  type: { type: String, default: 'Bearer'},
-  expiredAt: { type: String, default: null },
+  type: {
+    type: String,
+    default: 'Bearer'
+  },
+  expiredAt: {
+    type: String,
+    default: moment().add(7, 'd').format('YYYY-MM-DD')
+  },
   user: {
     type: Schema.ObjectId,
     ref: 'User',
@@ -28,21 +33,13 @@ const FIELDS = {
   },
   update: {
     when: {type: Date}
-  },
-  delete: {
-    when: {type: Date}
   }
 }
 
-const allowField = ['_id', 'token', 'user', 'type', 'expiredAt', 'insert', 'update'];
-const methods = {
-  getFields: function (fields = allowField) {
-    return Utils.fillOptionalFields(this, {}, fields);
-  }
-};
+const arrayJoin = [
+  {path: 'user', select: 'email name role address phone company customer'},
+];
 
-const arrayJoin = [];
-
-let tableSchema = BaseSchema(FIELDS, projection, methods, arrayJoin);
+let tableSchema = BaseSchema(FIELDS, projection, null, arrayJoin);
 
 module.exports = mongoose.model(mTAG, tableSchema);

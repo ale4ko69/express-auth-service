@@ -9,11 +9,7 @@
   "roles": {
     "root": "root",
     "admin": "admin",
-    "agency": "agency",
-    "customer": "customer",
-    "maker": "maker",
-    "checker": "checker",
-    "streamer": "streamer"
+    "guest": "guest"
   },
   "passwordDefault": "123456"
 }

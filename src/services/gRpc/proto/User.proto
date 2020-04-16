@@ -3,9 +3,7 @@ syntax = 'proto3';
 message Empty {}
 message Subject {
     string _id = 1;
-    string name = 2;
-    string lng = 3;
-    string lat = 4;
+    string email = 2;
 }
 message Request {
     string options = 1;

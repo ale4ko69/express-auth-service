@@ -1,16 +1,16 @@
 'use strict'
 
-const BaseService = require('./base');
+const BaseService = require('./GRPC');
 const to = require('await-to-js').default;
-const AuthUtil = require('../../../../utils/auth');
-const Model = require('../../../Models/User');
-const Token = require('../../../Models/Token');
+const AuthUtil = require('../../utils/auth');
+const Model = require('../Models/User');
+const ModelToken = require('../Models/Token');
 
 class AuthService extends BaseService {
   constructor () {
     super(AuthService)
     this.model = Model;
-    this.tokenModel = Token;
+    this.mToken = ModelToken;
   }
 
   async lists (call, callback) {

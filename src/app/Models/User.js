@@ -8,7 +8,7 @@ const BaseSchema = require('./BaseSchema');
 const {roles} = require('../../config');
 const Utils = require('../../utils');
 const mTAG = 'User'
-const projection = {delete: 0, __v: 0, hash: 0, salt: 0};
+const projection = {__v: 0, delete: 0, hash: 0, salt: 0, secretKey: 0};
 
 const FIELDS = {
   email: {
@@ -25,7 +25,7 @@ const FIELDS = {
   role: {
     type: String,
     required: true,
-    default: roles.maker,
+    default: roles.guest,
     index: true
   },
   address: {
@@ -44,6 +44,10 @@ const FIELDS = {
   customer: {
     type: Schema.ObjectId,
     index: true
+  },
+  secretKey: {
+    type: String,
+    required: true
   },
   hash: {
     type: String,

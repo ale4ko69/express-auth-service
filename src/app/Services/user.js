@@ -1,7 +1,7 @@
 'use strict'
 
-const BaseService = require('./base')
-const Model = require('../../../Models/User')
+const BaseService = require('./GRPC')
+const Model = require('../Models/User')
 
 class Service extends BaseService {
   constructor () {

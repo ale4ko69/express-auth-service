@@ -1,9 +1,9 @@
 'use strict'
 
 const to = require('await-to-js').default;
-const DBUtil = require('../../../../utils/Database');
+const DBUtil = require('../../../utils/Database');
 // const HttpUtil = require('../../../utils/http');
-const Utils = require('../../../../utils');
+const Utils = require('../../../utils');
 const statusCode = {
   UNIMPLEMENTED: 12,
   INVALID_ARGUMENT: 3
