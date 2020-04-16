@@ -6,6 +6,7 @@ const {FORMAT_DATE = 'YYYY-MM-DD'} = process.env
 const {baseUrl, backendHost, backendPort} = require('./http')
 const DB_CONFIG = require('./database')
 const settings = require('./setting.json')
+console.log(rootPath);
 
 module.exports = {
   baseUrl: baseUrl,

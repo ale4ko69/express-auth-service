@@ -123,4 +123,4 @@ Thumbs.db
 
 # config
 app.json
-config/setting.json
+src/config/setting.json

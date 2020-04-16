@@ -1,7 +1,6 @@
 const _ = require('lodash')
 const URL = require('url')
 const path = require('path')
-const mailConfigs = require('../services/Mailer/config')
 const settings = require('../config/setting.json')
 const lang = require('../langs')
 const DefaultLanguage = settings.defaultLanguage
@@ -330,14 +329,6 @@ module.exports = {
     result = result.replace(reg, '')
 
     return result
-  },
-
-  getReceivedNotifyMail() {
-    return require('../config/pi/config.json').receivedNotifyMail || mailConfigs.RECEIVED_NOTIFY_EMAIL;
-  },
-
-  getDeviceStatus(player) {
-    return player.isConnected ? "Online" : "Offline"
   }
 };
 

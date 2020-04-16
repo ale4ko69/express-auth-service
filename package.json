@@ -1,18 +1,22 @@
 {
   "name": "express-oauth2-service",
   "version": "1.0.0",
+  "build": "2020/04/16 18:00:00",
   "description": "OAuth2 server on ExpressJS",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "keywords": [
     "OAuth2",
     "ExpressJS"
   ],
-  "author": "MQICTSolution",
+  "author": "MQ ICT Solutions",
   "license": "ISC",
   "devDependencies": {
+    "dotenv": "^8.2.0",
+    "nodemon": "latest",
+    "typescript": "2.8.4",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-import": "^2.20.2",
@@ -26,7 +30,7 @@
     "body-parser": "^1.19.0",
     "connect-mongo": "^3.2.0",
     "cookie-parser": "^1.4.5",
-    "dotenv": "^8.2.0",
+    "cron": "1.4.1",
     "errorhandler": "^1.5.1",
     "express": "^4.17.1",
     "express-session": "^1.17.0",
@@ -34,8 +38,6 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
-    "mongoose": "^5.9.9",
-    "serve-favicon": "^2.5.0",
-    "serve-index": "^1.9.1"
+    "mongoose": "^5.9.9"
   }
 }
