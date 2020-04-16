@@ -2,7 +2,6 @@
 
 const to = require('await-to-js').default;
 const DBUtil = require('../../../utils/Database');
-// const HttpUtil = require('../../../utils/http');
 const Utils = require('../../../utils');
 const statusCode = {
   UNIMPLEMENTED: 12,
@@ -10,19 +9,19 @@ const statusCode = {
 };
 
 class BaseService {
-  constructor (child) {
+  constructor(child) {
     this._methods = [];
     this.bindingMethods = this.bindingMethods.bind(this);
     this.bindingMethods(child);
   }
 
-  async lists (call, callback) {
-    let { options } = call.request;
+  async lists(call, callback) {
+    let {options} = call.request;
     options = options ? JSON.parse(options) : {};
-    const { page, perPage, filters = {} } = options;
+    const {page, perPage, filters = {}} = options;
     let [err, rs] = await to(Promise.all([
       this.model.lists(options),
-      this.model.getCount(options.filters)
+      this.model.getCount(filters)
     ]));
 
     if (err) return callback(err);
@@ -31,46 +30,42 @@ class BaseService {
     callback(null, rs);
   }
 
-  async detail (call, callback) {
-    const { params } = call.request;
-    const [err, rs] = await to(this.model.getOne({ _id: params }, true));
+  async detail(call, callback) {
+    const {params} = call.request;
+    const [err, rs] = await to(this.model.getOne({_id: params}, true));
     if (err) return callback(err);
 
-    callback(null, { data: rs });
+    callback(null, {data: rs});
   }
 
-  async filters (call, callback) {
-    let { conditions } = call.request;
+  async filters(call, callback) {
+    let {conditions} = call.request;
     conditions = conditions ? JSON.parse(conditions) : {};
     const [err, rs] = await to(this.model.findByCondition(conditions, true));
     if (err) return callback(err);
 
-    callback(null, { data: rs });
+    callback(null, {data: rs});
   }
 
-  async update (call, callback) {
-    let { options } = call.request;
+  async update(call, callback) {
+    let {options} = call.request;
     options = options ? JSON.parse(options) : {};
-    const { condition, data, multi = false } = options;
+    const {condition, data, multi = false} = options;
     const [err, rs] = await to(this.model.update(condition, data, multi));
     if (err) return callback(err);
 
-    callback(null, { data: rs || '' });
+    callback(null, {data: rs || ''});
   }
 
   /*
     *** handle request
    */
-  async fetch (call, callback) {
-    let { options, methodName } = call.request;
+  async fetch(call, callback) {
+    let {options, methodName} = call.request;
     if (!methodName || !options) {
-      return this.error(callback,
-        'Service methodName is not provided',
-        statusCode.INVALID_ARGUMENT
-      );
+      return this.error(callback, 'Service methodName is not provided');
     }
     options = options ? JSON.parse(options) : {};
-    console.log('options', options);
     if (Utils.isObjectEmpty(options)) {
       return this.error(callback, 'Params conditions must be an empty object');
     }
@@ -80,21 +75,17 @@ class BaseService {
         statusCode.UNIMPLEMENTED
       );
     }
-
-    const [err, result] = await to(this[methodName](options));
-    if (err) {
-      console.log('err', err);
-      callback(err, null);
-    }
-    callback(null, { msg: JSON.stringify(result) });
+    let [err, result] = await to(this[methodName](options));
+    if (err) return callback(err, null);
+    callback(null, {msg: JSON.stringify(result)});
   }
 
-  error (cb, message, code = statusCode.INVALID_ARGUMENT) {
-    const err = { code, message };
+  error(cb, message, code = statusCode.INVALID_ARGUMENT) {
+    const err = {code, message};
     cb(err, null);
   }
 
-  bindingMethods (obj) {
+  bindingMethods(obj) {
     let methods = Object.getOwnPropertyNames(obj.prototype);
     methods = methods.filter(x => (x !== 'constructor' && x !== 'bindingMethods'));
     this._methods = methods;

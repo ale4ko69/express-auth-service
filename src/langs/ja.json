@@ -17,6 +17,7 @@
     "login": "メールまたはパスワードが間違っています。",
     "register": "%0アカウントを追加できません",
     "Permission_Denied": "あなたはこの操作を行う権限を持っていません",
+    "Cannot_Login": "Lỗi đăng nhập: %0",
     "Cannot_Delete": "あなたはこのデータを削除する権限を持っていません",
     "Change_Password": "パスワードを変更するうちにエラーが発生しました %0",
     "Email_Invalid": "メールアドレスは不正です (%0)",

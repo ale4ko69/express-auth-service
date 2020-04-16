@@ -17,6 +17,7 @@
     "login": "Email or password is incorrect",
     "register": "Register failed: %0",
     "Permission_Denied": "Permission denied",
+    "Cannot_Login": "Login failed: %0",
     "Cannot_Delete": "You have not permission for delete this",
     "Change_Password": "Change password failed: %0",
     "Email_Invalid": "Invalid email (%0)",

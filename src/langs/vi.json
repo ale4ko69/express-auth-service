@@ -17,6 +17,7 @@
     "login": "Email hoặc mật khẩu không đúng",
     "register": "Đăng ký tài khoản không thành công: %0",
     "Permission_Denied": "Bạn không có quyền thực hiện thao tác này.",
+    "Cannot_Login": "Lỗi đăng nhập: %0",
     "Cannot_Delete": "Bạn không có quyền để xóa bản ghi này",
     "Change_Password": "Cập nhật mật khẩu xảy ra lỗi: %0",
     "Email_Invalid": "Địa chỉ email không hợp lệ (%0)",
