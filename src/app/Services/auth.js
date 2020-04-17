@@ -37,7 +37,8 @@ class AuthService extends BaseService {
     return super.fetch(call, callback);
   }
 
-  async login(options) {
+  async login (options) {
+    console.log('login auth service');
     options = HttpUtil.checkRequiredParams2(options, ['username', 'password', 'secret']);
     if (options.error) throw Error(options.error);
 
@@ -50,7 +51,8 @@ class AuthService extends BaseService {
     } else {
       value = `${APP_KEY[secret]}${username}`
     }
-    let condition = {$or: [{email: value}, {username: value}]};
+    let scope = APP_KEY[secret];
+    let condition = { $or: [{ email: username }, { username: value }], scope: scope };
     let [err, user] = await to(this.model.getOne(condition, true, {}));
     if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
     if (!user || user.delete) throw Error(Utils.localizedText('Not_Exists.user', username));
@@ -60,30 +62,27 @@ class AuthService extends BaseService {
     }
 
     let token = AuthUtil.generateJwt(user);
-    ['__v', 'hash', 'salt', 'secretKey', 'update', 'insert'].forEach(field => delete user[field]);
+    ['__v', 'hash', 'salt', 'scope', 'update', 'insert'].forEach(field => delete user[field]);
 
     let result;
     [err, result] = await to(this.mToken.insertOne({user: user._id, token: token}));
     if (err) throw Error(Utils.localizedText('Errors.login', err.message));
 
-    return {token, authUser: user}
+    return {token, user}
   }
 
-  async register(options) {
-    const requireParams = ['email', 'name', 'password', 'secret'];
-    options = HttpUtil.getRequiredParamsFromJson2(options, requireParams);
-    if (options.error) throw Error(options.error);
-
+  async register (options) {
+    console.log('fetch register');
     let {email, name, password, secret} = options;
     if (!APP_KEY[secret]) throw Error(`System is not supported`);
-    let secretKey = APP_KEY[secret];
-    let username = `${secretKey}${email}`;
+    let scope = APP_KEY[secret];
+    let username = `${scope}${email}`;
     let [err, user] = await to(this.model.getOne({username: username}));
     if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
     if (user) throw Error(Utils.localizedText('Unique.user.email', email));
 
     let {salt, hash} = AuthUtil.setPassword(password);
-    let obj = {email, name, username, secretKey, role: roles.guest, salt, hash};
+    let obj = {email, name, username, scope, role: roles.guest, salt, hash};
 
     [err, user] = await to(this.model.insertOne(obj));
     if (err) throw Error(Utils.localizedText('Errors.register', err.message));
@@ -95,10 +94,10 @@ class AuthService extends BaseService {
     [err, result] = await to(this.mToken.insertOne({user: user._id, token: token}));
     if (err) throw Error(Utils.localizedText('Errors.login', err.message));
 
-    return {token, authUser: user}
+    return {token, user}
   }
 
-  async changePassword(options) {
+  async changePassword (options) {
     const requireParams = ['userId', 'old_password', 'new_password'];
     options = HttpUtil.getRequiredParamsFromJson2(options, requireParams);
     if (options.error) throw Error(options.error);

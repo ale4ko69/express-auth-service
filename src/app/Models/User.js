@@ -45,7 +45,7 @@ const FIELDS = {
     type: Schema.ObjectId,
     index: true
   },
-  secretKey: {
+  scope: {
     type: String,
     required: true
   },
