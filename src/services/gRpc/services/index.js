@@ -19,9 +19,6 @@ module.exports = function (grpc, protoLoader, gRpcServer, subject) {
 
   gRpcServer.addService(descriptor[serviceName].service, {
     list: Service.lists,
-    detail: Service.detail,
-    filter: Service.filters,
-    update: Service.update,
     fetch: Service.fetch
   })
 }
