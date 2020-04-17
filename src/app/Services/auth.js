@@ -37,8 +37,7 @@ class AuthService extends BaseService {
     return super.fetch(call, callback);
   }
 
-  async login (options) {
-    console.log('login auth service');
+  async login(options) {
     options = HttpUtil.checkRequiredParams2(options, ['username', 'password', 'secret']);
     if (options.error) throw Error(options.error);
 
@@ -51,8 +50,7 @@ class AuthService extends BaseService {
     } else {
       value = `${APP_KEY[secret]}${username}`
     }
-    let scope = APP_KEY[secret];
-    let condition = { $or: [{ email: username }, { username: value }], scope: scope };
+    let condition = {$or: [{email: value}, {username: value}]};
     let [err, user] = await to(this.model.getOne(condition, true, {}));
     if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
     if (!user || user.delete) throw Error(Utils.localizedText('Not_Exists.user', username));
@@ -71,8 +69,11 @@ class AuthService extends BaseService {
     return {token, user}
   }
 
-  async register (options) {
-    console.log('fetch register');
+  async register(options) {
+    const requireParams = ['email', 'name', 'password', 'secret'];
+    options = HttpUtil.checkRequiredParams2(options, requireParams);
+    if (options.error) throw Error(options.error);
+
     let {email, name, password, secret} = options;
     if (!APP_KEY[secret]) throw Error(`System is not supported`);
     let scope = APP_KEY[secret];
@@ -97,7 +98,7 @@ class AuthService extends BaseService {
     return {token, user}
   }
 
-  async changePassword (options) {
+  async changePassword(options) {
     const requireParams = ['userId', 'old_password', 'new_password'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
     if (options.error) throw Error(options.error);
@@ -148,34 +149,16 @@ class AuthService extends BaseService {
   }
 
   async checkTokens(options) {
-    console.log('check token')
     const requireParams = ['token'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
-    if (options.error) {
-      console.log('errr validate token');
-      throw Error(options.error);
-    }
+    if (options.error) throw Error(options.error);
 
     let [err, result] = await to(this.mToken.getOne({token: options.token}, true));
-    if (err) {
-      console.log('not foudn token in db');
-      throw Error(Utils.localizedText('Found_Errors.general', err.message));
-    } else if (!result) {
-      console.log('not foudn token in db');
-      throw Error('Invalid Token');
+    if (err) throw Error(Utils.localizedText('Found_Errors.general', err.message));
+    if (!result || Utils.isString(result.user) || result.expiredAt <= Date.now()) {
+      throw Error(Utils.localizedText('unauthorized'));
     }
-    console.log('result.user', result.user);
-    return new Promise((resolve, reject) => {
-      AuthUtil.verify(options.token, (err, payload) => {
-        if (err) {
-          console.log('invalid token', err);
-          reject(err);
-        } else {
-          console.log('valid token')
-          resolve({ token: result.token, payload: payload, authUser: result.user });
-        }
-      });
-    });
+    return {token: result.token, authUser: result.user}
   }
 
   async logout(options) {
