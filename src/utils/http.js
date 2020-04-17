@@ -18,8 +18,8 @@ module.exports = {
     return p;
   },
   /**
-   * 
-   * @param {Object} req 
+   *
+   * @param {Object} req
    */
   headers(req) {
     return {
@@ -33,14 +33,14 @@ module.exports = {
   },
   /**
    * Get base URL of request.
-   * @param {Object} req 
+   * @param {Object} req
    */
   getBaseUrl(req) {
     return `http://${req.headers.host}`
   },
   /**
    * Get all parameters of request
-   * @param {Object} req 
+   * @param {Object} req
    */
   getParamsFull: function (req) {
     let p = {};
@@ -74,8 +74,8 @@ module.exports = {
 
   /**
    * Get required data in request body JSON.
-   * @param {Object} req 
-   * @param {Array} required_param_names 
+   * @param {Object} req
+   * @param {Array} required_param_names
    */
   getRequiredParamsFromJson(req, required_param_names) {
     return this.checkRequiredParams(req.body, required_param_names);
@@ -99,29 +99,20 @@ module.exports = {
     return this.checkRequiredParams2(params, required_param_names);
   },
 
-  createErrorInvalidInput(msgOrKey, words) {
+  createErrorInvalidInput(msgOrKey, words = null) {
     return this.createError(this.BAD_REQUEST, msgOrKey, words);
   },
 
-  createError(code, key, words) {
-    let {msgKey, message} = Utils.getMsgObjectFromKey(key, words);
-    return {code, msgKey, message};
-  },
-  
-  // gọi từ api interface, thường dùng khi input validator failed
-  // err được tạo từ api/controller, dùng hàm createErrorInvalidInput bên trên
-  apiError(langCode, res, err) {
-    // console.log('apiError langCode: ', langCode, ' -- err: ', err);
-    if (err instanceof Error) {
-      return this.internalServerError(res, err);
+  createError(code, key, words = null) {
+    if (words) {
+      let {msgKey, message} = Utils.getMsgObjectFromKey(key, words);
+      return {code, msgKey, message};
     }
-    const httpCode = (err && err.code) ? err.code : this.BAD_REQUEST;
-    return this.error(httpCode, res, err);
+    return {code, message: Utils.localizedText(key)}
   },
 
   // các trường hợp sử dụng thường gặp
   // error(500, res, err)
-  // error(500, [req, res], 'Message_Code')
   error(httpCode, res, err, opt_info = null) {
     _error(httpCode, res, err, opt_info);
   },
