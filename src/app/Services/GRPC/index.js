@@ -2,10 +2,11 @@
 
 const to = require('await-to-js').default;
 const DBUtil = require('../../../utils/Database');
+const HttpUtil = require('../../../utils/http');
 const Utils = require('../../../utils');
 const statusCode = {
-  UNIMPLEMENTED: 12,
-  INVALID_ARGUMENT: 3
+  INVALID_ARGUMENT: 3,
+  UNIMPLEMENTED: 12
 };
 
 class BaseService {
@@ -23,38 +24,12 @@ class BaseService {
       this.model.lists(options),
       this.model.getCount(filters)
     ]));
-
-    if (err) return callback(err);
-    rs = DBUtil.paginationResult(page, perPage, rs[0], rs[1], filters);
-    delete rs.filters;
-    callback(null, rs);
-  }
-
-  async detail(call, callback) {
-    const {params} = call.request;
-    const [err, rs] = await to(this.model.getOne({_id: params}, true));
-    if (err) return callback(err);
-
-    callback(null, {msg: rs});
-  }
-
-  async filters(call, callback) {
-    let {conditions} = call.request;
-    conditions = conditions ? JSON.parse(conditions) : {};
-    const [err, rs] = await to(this.model.findByCondition(conditions, true));
-    if (err) return callback(err);
-
-    callback(null, {msg: rs});
-  }
-
-  async update(call, callback) {
-    let {options} = call.request;
-    options = options ? JSON.parse(options) : {};
-    const {condition, data, multi = false} = options;
-    const [err, rs] = await to(this.model.update(condition, data, multi));
-    if (err) return callback(err);
-
-    callback(null, {msg: rs || ''});
+    if (err) {
+      rs = {code: HttpUtil.INTERNAL_SERVER_ERROR, message: err.message}
+    } else {
+      rs = {data: DBUtil.paginationResult(page, perPage, rs[0], rs[1], filters), stringify: false}
+    }
+    return this.response(callback, rs);
   }
 
   /*
@@ -67,7 +42,7 @@ class BaseService {
     }
     options = options ? JSON.parse(options) : {};
     if (Utils.isObjectEmpty(options)) {
-      return this.error(callback, 'Params conditions must be an empty object');
+      return this.error(callback, 'Params options must be an empty object');
     }
     if (!this._methods.includes(methodName)) {
       return this.error(callback,
@@ -75,14 +50,49 @@ class BaseService {
         statusCode.UNIMPLEMENTED
       );
     }
-    let [err, result] = await to(this[methodName](options));
-    if (err) return callback(err, null);
-    callback(null, {msg: JSON.stringify(result)});
+    return await this[methodName](callback, options)
+  }
+
+  async detail(cb, options) {
+    let {params} = options;
+    let [err, rs] = await to(this.model.getOne({_id: params}, true));
+    if (err) {
+      rs = {code: HttpUtil.INTERNAL_SERVER_ERROR, message: err.message}
+    } else {
+      rs = {data: rs}
+    }
+    return this.response(cb, rs)
+  }
+
+  async filters(cb, options) {
+    let {conditions} = options;
+    let [err, rs] = await to(this.model.findByCondition(conditions, true));
+    if (err) {
+      rs = {code: HttpUtil.INTERNAL_SERVER_ERROR, message: err.message}
+    } else {
+      rs = {data: rs}
+    }
+    return this.response(cb, rs)
+  }
+
+  async update(cb, options) {
+    let {condition, data, multi = false} = options;
+    let [err, rs] = await to(this.model.update(condition, data, multi));
+    if (err) {
+      rs = {code: HttpUtil.INTERNAL_SERVER_ERROR, message: err.message}
+    } else {
+      rs = {message: Utils.localizedText("Success.update"), data: rs}
+    }
+    return this.response(cb, rs)
   }
 
   error(cb, message, code = statusCode.INVALID_ARGUMENT) {
-    const err = {code, message};
-    cb(err, null);
+    cb({code, message}, null);
+  }
+
+  response(cb, {code = HttpUtil.OK, message = "Success", data = undefined, stringify = true}) {
+    if (data && stringify) data = JSON.stringify(data);
+    cb(null, {code, message, data})
   }
 
   bindingMethods(obj) {
