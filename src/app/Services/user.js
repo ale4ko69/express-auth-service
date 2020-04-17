@@ -20,61 +20,68 @@ class Service extends BaseService {
     return super.lists(call, callback)
   }
 
-  async detail(call, callback) {
-    return super.detail(call, callback)
-  }
-
-  async filters(call, callback) {
-    return super.filters(call, callback)
-  }
-
-  async update(call, callback) {
-    return super.update(call, callback)
-  }
-
   async fetch(call, callback) {
     return super.fetch(call, callback);
   }
 
-  async store(options) {
+  async store(cb, options) {
     const requireParams = ['email', 'name', 'role', 'password', 'secret'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
-    if (options.error) throw Error(options.error);
-
+    if (options.error) {
+      return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
+    }
     const acceptFields = [...requireParams, 'address', 'phone', 'company', 'customer'];
     options = Utils.getAcceptableFields(options, acceptFields);
     let {email, password, secret} = options;
-    if (!APP_KEY[secret]) throw Error(`System is not supported`);
-
-    let secretKey = APP_KEY[secret];
-    let username = `${secretKey}${email}`;
+    let result;
+    if (!APP_KEY[secret]) {
+      result = HttpUtil.createError(HttpUtil.METHOD_NOT_ALLOWED, `System is not supported`);
+      return this.response(cb, result)
+    }
+    let scope = APP_KEY[secret];
+    let username = `${scope}${email}`;
     let [err, user] = await to(this.model.getOne({username: username}));
-    if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
-    if (user) throw Error(Utils.localizedText('Unique.user.email', email));
-
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
+      return this.response(cb, result)
+    }
+    if (user) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Unique.user.email', email)
+      return this.response(cb, result)
+    }
     let {salt, hash} = AuthUtil.setPassword(password);
     delete options.password;
     delete options.secret;
 
-    let obj = {...options, username, secretKey, salt, hash};
+    let obj = {...options, username, scope, salt, hash};
     [err, user] = await to(this.model.insertOne(obj));
-    if (err) throw Error(Utils.localizedText('Errors.create', err.message));
-
-    user = user.getFields();
-    user = Utils.cloneObject(user);
-    return {user}
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.create', err.message)
+    } else {
+      user = user.getFields();
+      user = Utils.cloneObject(user);
+      result = {data: user}
+    }
+    return this.response(cb, result)
   }
 
-  async destroy(options) {
+  async destroy(cb, options) {
     const requireParams = ['userId', 'softDelete'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
-    if (options.error) throw Error(options.error);
-
+    if (options.error) {
+      return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
+    }
+    let result;
     let {userId, softDelete} = options;
     let [err, user] = await to(this.model.getOne({_id: userId}, false, {}));
-    if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
-    if (!user || user.delete) throw Error(Utils.localizedText('Not_Exists.user', userId));
-
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
+      return this.response(cb, result)
+    }
+    if (!user || user.delete) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Not_Exists.user', userId);
+      return this.response(cb, result)
+    }
     let actions = [
       this.mToken.deleteByCondition({user: user._id})
     ];
@@ -83,11 +90,13 @@ class Service extends BaseService {
     } else {
       actions.push(this.model.softDeletes({_id: user._id}))
     }
-    let result;
     [err, result] = await to(Promise.all(actions));
-    if (err) throw Error(Utils.localizedText('Errors.delete', err.message));
-
-    return Utils.localizedText('Success.delete')
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.delete', err.message)
+    } else {
+      result = {message: Utils.localizedText('Success.delete')}
+    }
+    return this.response(cb, result)
   }
 }
 
