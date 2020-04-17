@@ -99,7 +99,7 @@ class AuthService extends BaseService {
 
   async changePassword (options) {
     const requireParams = ['userId', 'old_password', 'new_password'];
-    options = HttpUtil.getRequiredParamsFromJson2(options, requireParams);
+    options = HttpUtil.checkRequiredParams2(options, requireParams);
     if (options.error) throw Error(options.error);
 
     let {userId, old_password, new_password} = options
@@ -128,7 +128,7 @@ class AuthService extends BaseService {
 
   async resetPassword(options) {
     const requireParams = ['userId', 'new_password'];
-    options = HttpUtil.getRequiredParamsFromJson2(options, requireParams);
+    options = HttpUtil.checkRequiredParams2(options, requireParams);
     if (options.error) throw Error(options.error);
 
     let {userId, new_password} = options;
@@ -148,21 +148,39 @@ class AuthService extends BaseService {
   }
 
   async checkTokens(options) {
+    console.log('check token')
     const requireParams = ['token'];
-    options = HttpUtil.getRequiredParamsFromJson2(options, requireParams);
-    if (options.error) throw Error(options.error);
+    options = HttpUtil.checkRequiredParams2(options, requireParams);
+    if (options.error) {
+      console.log('errr validate token');
+      throw Error(options.error);
+    }
 
     let [err, result] = await to(this.mToken.getOne({token: options.token}, true));
-    if (err) throw Error(Utils.localizedText('Found_Errors.general', err.message));
-    if (!result || Utils.isString(result.user) || result.expiredAt <= Date.now()) {
-      throw Error(Utils.localizedText('unauthorized'));
+    if (err) {
+      console.log('not foudn token in db');
+      throw Error(Utils.localizedText('Found_Errors.general', err.message));
+    } else if (!result) {
+      console.log('not foudn token in db');
+      throw Error('Invalid Token');
     }
-    return {token: result.token, authUser: result.user}
+    console.log('result.user', result.user);
+    return new Promise((resolve, reject) => {
+      AuthUtil.verify(options.token, (err, payload) => {
+        if (err) {
+          console.log('invalid token', err);
+          reject(err);
+        } else {
+          console.log('valid token')
+          resolve({ token: result.token, payload: payload, authUser: result.user });
+        }
+      });
+    });
   }
 
   async logout(options) {
     const requireParams = ['token'];
-    options = HttpUtil.getRequiredParamsFromJson2(options, requireParams);
+    options = HttpUtil.checkRequiredParams2(options, requireParams);
     if (options.error) throw Error(options.error);
 
     let [err, result] = await to(this.mToken.deleteByCondition({token: options.token}));
