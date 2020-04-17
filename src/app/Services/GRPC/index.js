@@ -35,7 +35,7 @@ class BaseService {
     const [err, rs] = await to(this.model.getOne({_id: params}, true));
     if (err) return callback(err);
 
-    callback(null, {data: rs});
+    callback(null, {msg: rs});
   }
 
   async filters(call, callback) {
@@ -44,7 +44,7 @@ class BaseService {
     const [err, rs] = await to(this.model.findByCondition(conditions, true));
     if (err) return callback(err);
 
-    callback(null, {data: rs});
+    callback(null, {msg: rs});
   }
 
   async update(call, callback) {
@@ -54,7 +54,7 @@ class BaseService {
     const [err, rs] = await to(this.model.update(condition, data, multi));
     if (err) return callback(err);
 
-    callback(null, {data: rs || ''});
+    callback(null, {msg: rs || ''});
   }
 
   /*
