@@ -21,29 +21,22 @@ class AuthService extends BaseService {
     return super.lists(call, callback)
   }
 
-  async detail(call, callback) {
-    return super.detail(call, callback)
-  }
-
-  async filters(call, callback) {
-    return super.filters(call, callback)
-  }
-
-  async update(call, callback) {
-    return super.update(call, callback)
-  }
-
   async fetch(call, callback) {
     return super.fetch(call, callback);
   }
 
-  async login(options) {
-    options = HttpUtil.checkRequiredParams2(options, ['username', 'password', 'secret']);
-    if (options.error) throw Error(options.error);
-
+  async login(cb, options) {
+    const requireParams = ['username', 'password', 'secret'];
+    options = HttpUtil.checkRequiredParams2(options, requireParams);
+    if (options.error) {
+      return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
+    }
     let {username, password, secret} = options;
-    if (!APP_KEY[secret]) throw Error(`System is not supported`);
-
+    let result;
+    if (!APP_KEY[secret]) {
+      result = HttpUtil.createError(HttpUtil.METHOD_NOT_ALLOWED, `System is not supported`);
+      return this.response(cb, result)
+    }
     let value;
     if (["root", "root@gmail.com"].indexOf(username) > -1) {
       value = username
@@ -52,124 +45,170 @@ class AuthService extends BaseService {
     }
     let condition = {$or: [{email: value}, {username: value}]};
     let [err, user] = await to(this.model.getOne(condition, true, {}));
-    if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
-    if (!user || user.delete) throw Error(Utils.localizedText('Not_Exists.user', username));
-
-    if (!AuthUtil.validPassword(user, password)) {
-      throw new Error(Utils.localizedText('Errors.Incorrect_Password'))
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
+      return this.response(cb, result)
     }
-
+    if (!user || user.delete) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Not_Exists.user', username);
+      return this.response(cb, result)
+    }
+    if (!AuthUtil.validPassword(user, password)) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Errors.Incorrect_Password');
+      return this.response(cb, result)
+    }
     let token = AuthUtil.generateJwt(user);
-    ['__v', 'hash', 'salt', 'scope', 'update', 'insert'].forEach(field => delete user[field]);
-
-    let result;
     [err, result] = await to(this.mToken.insertOne({user: user._id, token: token}));
-    if (err) throw Error(Utils.localizedText('Errors.login', err.message));
-
-    return {token, user}
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.login', err.message)
+    } else {
+      ['__v', 'hash', 'salt', 'scope', 'update', 'insert'].forEach(field => delete user[field]);
+      result = {data: {token, user}}
+    }
+    return this.response(cb, result)
   }
 
-  async register(options) {
+  async register(cb, options) {
     const requireParams = ['email', 'name', 'password', 'secret'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
-    if (options.error) throw Error(options.error);
-
+    if (options.error) {
+      return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
+    }
     let {email, name, password, secret} = options;
-    if (!APP_KEY[secret]) throw Error(`System is not supported`);
+    let result;
+    if (!APP_KEY[secret]) {
+      result = HttpUtil.createError(HttpUtil.METHOD_NOT_ALLOWED, `System is not supported`);
+      return this.response(cb, result)
+    }
     let scope = APP_KEY[secret];
     let username = `${scope}${email}`;
     let [err, user] = await to(this.model.getOne({username: username}));
-    if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
-    if (user) throw Error(Utils.localizedText('Unique.user.email', email));
-
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
+      return this.response(cb, result)
+    }
+    if (user) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Unique.user.email', email)
+      return this.response(cb, result)
+    }
     let {salt, hash} = AuthUtil.setPassword(password);
     let obj = {email, name, username, scope, role: roles.guest, salt, hash};
-
     [err, user] = await to(this.model.insertOne(obj));
-    if (err) throw Error(Utils.localizedText('Errors.register', err.message));
-
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.register', err.message);
+      return this.response(cb, result)
+    }
     user = user.getFields();
     user = Utils.cloneObject(user);
     let token = AuthUtil.generateJwt(user);
-    let result;
     [err, result] = await to(this.mToken.insertOne({user: user._id, token: token}));
-    if (err) throw Error(Utils.localizedText('Errors.login', err.message));
-
-    return {token, user}
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.login', err.message)
+    } else {
+      result = {data: {token, user}}
+    }
+    return this.response(cb, result)
   }
 
-  async changePassword(options) {
+  async changePassword(cb, options) {
     const requireParams = ['userId', 'old_password', 'new_password'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
-    if (options.error) throw Error(options.error);
-
+    if (options.error) {
+      return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
+    }
     let {userId, old_password, new_password} = options
     if (Utils.compareString(old_password, new_password)) {
-      throw Error(Utils.localizedText('Errors.New_Old_Pw_Must_Different'))
+      return this.response(cb, HttpUtil.createErrorInvalidInput('Errors.New_Old_Pw_Must_Different'))
     }
-
-    let [err, user] = await to(this.model.getOne({_id: userId}, false, {}));
-    if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
-    if (!user || user.delete) throw Error(Utils.localizedText('Not_Exists.user', userId));
-
-    if (!AuthUtil.validPassword(user, old_password)) {
-      throw Error(Utils.localizedText('Errors.Old_Pw_Not_Match'))
-    }
-
-    let objUpdate = AuthUtil.setPassword(new_password);
     let result;
+    let [err, user] = await to(this.model.getOne({_id: userId}, false, {}));
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
+      return this.response(cb, result)
+    }
+    if (!user || user.delete) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Not_Exists.user', userId);
+      return this.response(cb, result)
+    }
+    if (!AuthUtil.validPassword(user, old_password)) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Errors.Old_Pw_Not_Match');
+      return this.response(cb, result)
+    }
+    let objUpdate = AuthUtil.setPassword(new_password);
     [err, result] = await to(Promise.all([
       this.model.updateOne(user._id, objUpdate),
       this.mToken.deleteByCondition({user: user._id})
     ]));
-    if (err) throw Error(Utils.localizedText('Errors.Change_Password', err.message));
-
-    return Utils.localizedText('Success.Change_Password')
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.Change_Password', err.message)
+    } else {
+      result = {message: Utils.localizedText('Success.Change_Password')}
+    }
+    return this.response(cb, result)
   }
 
-  async resetPassword(options) {
+  async resetPassword(cb, options) {
     const requireParams = ['userId', 'new_password'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
-    if (options.error) throw Error(options.error);
-
+    if (options.error) {
+      return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
+    }
+    let result;
     let {userId, new_password} = options;
     let [err, user] = await to(this.model.getOne({_id: userId}, false, {}));
-    if (err) throw Error(Utils.localizedText('Found_Errors.user', err.message));
-    if (!user || user.delete) throw Error(Utils.localizedText('Not_Exists.user', userId));
-
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
+      return this.response(cb, result)
+    }
+    if (!user || user.delete) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Not_Exists.user', userId);
+      return this.response(cb, result)
+    }
     let objUpdate = AuthUtil.setPassword(new_password);
-    let result;
     [err, result] = await to(Promise.all([
       this.model.updateOne(user._id, objUpdate),
       this.mToken.deleteByCondition({user: user._id})
     ]));
-    if (err) throw Error(Utils.localizedText('Errors.Reset_Password', err.message));
-
-    return Utils.localizedText('Success.Reset_Password')
-  }
-
-  async checkTokens(options) {
-    const requireParams = ['token'];
-    options = HttpUtil.checkRequiredParams2(options, requireParams);
-    if (options.error) throw Error(options.error);
-
-    let [err, result] = await to(this.mToken.getOne({token: options.token}, true));
-    if (err) throw Error(Utils.localizedText('Found_Errors.general', err.message));
-    if (!result || Utils.isString(result.user) || result.expiredAt <= Date.now()) {
-      throw Error(Utils.localizedText('unauthorized'));
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.Reset_Password', err.message)
+    } else {
+      result = {message: Utils.localizedText('Success.Reset_Password')}
     }
-    return {token: result.token, authUser: result.user}
+    return this.response(cb, result)
   }
 
-  async logout(options) {
+  async checkTokens(cb, options) {
     const requireParams = ['token'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
-    if (options.error) throw Error(options.error);
+    if (options.error) {
+      return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
+    }
+    let [err, result] = await to(this.mToken.getOne({token: options.token}, true));
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.general', err.message)
+    } else {
+      if (!result || Utils.isString(result.user) || result.expiredAt <= Date.now()) {
+        result = {message: Utils.localizedText('unauthorized')}
+      } else {
+        result = {data: {token: result.token, authUser: result.user}}
+      }
+    }
+    return this.response(cb, result)
+  }
 
+  async logout(cb, options) {
+    const requireParams = ['token'];
+    options = HttpUtil.checkRequiredParams2(options, requireParams);
+    if (options.error) {
+      return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
+    }
     let [err, result] = await to(this.mToken.deleteByCondition({token: options.token}));
-    if (err) throw Error(Utils.localizedText('Errors.logout', err.message));
-
-    return Utils.localizedText('Success.general')
+    if (err) {
+      result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.logout', err.message)
+    } else {
+      result = {message: Utils.localizedText('Success.general')}
+    }
+    return this.response(cb, result)
   }
 }
 
