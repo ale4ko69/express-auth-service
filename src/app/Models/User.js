@@ -14,6 +14,11 @@ const FIELDS = {
   email: {
     type: String,
     required: true,
+    index: true
+  },
+  username: {
+    type: String,
+    required: true,
     unique: true,
     index: true
   },

@@ -41,10 +41,9 @@ class AuthService extends BaseService {
     if (["root", "root@gmail.com"].indexOf(username) > -1) {
       value = username
     } else {
-      value = `${APP_KEY[secret]}${username}`
+      value = `${APP_KEY[secret]}.${username}`
     }
-    let condition = {$or: [{email: value}, {username: value}]};
-    let [err, user] = await to(this.model.getOne(condition, true, {}));
+    let [err, user] = await to(this.model.getOne({username: value}, true, {}));
     if (err) {
       result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
       return this.response(cb, result)
@@ -80,8 +79,12 @@ class AuthService extends BaseService {
       result = HttpUtil.createError(HttpUtil.METHOD_NOT_ALLOWED, `System is not supported`);
       return this.response(cb, result)
     }
+    if (["root", "root@gmail.com"].indexOf(email) > -1) {
+      result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Unique.user.email', email)
+      return this.response(cb, result)
+    }
     let scope = APP_KEY[secret];
-    let username = `${scope}${email}`;
+    let username = `${scope}.${email}`;
     let [err, user] = await to(this.model.getOne({username: username}));
     if (err) {
       result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
@@ -188,7 +191,7 @@ class AuthService extends BaseService {
       result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.general', err.message)
     } else {
       if (!result || Utils.isString(result.user) || result.expiredAt <= Date.now()) {
-        result = {message: Utils.localizedText('unauthorized')}
+        result = HttpUtil.createError(HttpUtil.UNAUTHORIZED, 'unauthorized')
       } else {
         result = {data: {token: result.token, authUser: result.user}}
       }

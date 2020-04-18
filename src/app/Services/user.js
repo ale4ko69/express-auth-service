@@ -39,7 +39,7 @@ class Service extends BaseService {
       return this.response(cb, result)
     }
     let scope = APP_KEY[secret];
-    let username = `${scope}${email}`;
+    let username = `${scope}.${email}`;
     let [err, user] = await to(this.model.getOne({username: username}));
     if (err) {
       result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
