@@ -183,9 +183,6 @@ module.exports = {
   },
 
   getBearerTokenFromHeader(req) {
-    // if (req.session.token) {
-    //   return {token: req.session.token}
-    // }
     if (!req.headers.authorization) return {error: 'Missing access token'}
     let token = req.headers.authorization.trim()
     if (!token || token.length === 0) return {error: 'Missing access token'}
