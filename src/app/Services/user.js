@@ -7,7 +7,6 @@ const Utils = require('../../utils');
 const BaseService = require('./GRPC');
 const Model = require('../Models/User');
 const ModelToken = require('../Models/Token');
-const {APP_KEY} = require('../../config/env/auth');
 
 class Service extends BaseService {
   constructor() {
@@ -25,20 +24,15 @@ class Service extends BaseService {
   }
 
   async store(cb, options) {
-    const requireParams = ['email', 'name', 'role', 'password', 'secret'];
+    const requireParams = ['email', 'name', 'role', 'password', 'scope'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
     if (options.error) {
       return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
     }
     const acceptFields = [...requireParams, 'address', 'phone', 'company', 'customer'];
     options = Utils.getAcceptableFields(options, acceptFields);
-    let {email, password, secret} = options;
+    let {email, password, scope} = options;
     let result;
-    if (!APP_KEY[secret]) {
-      result = HttpUtil.createError(HttpUtil.METHOD_NOT_ALLOWED, `System is not supported`);
-      return this.response(cb, result)
-    }
-    let scope = APP_KEY[secret];
     let username = `${scope}.${email}`;
     let [err, user] = await to(this.model.getOne({username: username}));
     if (err) {
@@ -51,7 +45,6 @@ class Service extends BaseService {
     }
     let {salt, hash} = AuthUtil.setPassword(password);
     delete options.password;
-    delete options.secret;
 
     let obj = {...options, username, scope, salt, hash};
     [err, user] = await to(this.model.insertOne(obj));

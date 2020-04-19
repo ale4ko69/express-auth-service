@@ -4,6 +4,7 @@ const to = require('await-to-js').default;
 const DBUtil = require('../../../utils/Database');
 const HttpUtil = require('../../../utils/http');
 const Utils = require('../../../utils');
+const {APP_KEY} = require('../../../config/env/auth');
 const statusCode = {
   INVALID_ARGUMENT: 3,
   UNIMPLEMENTED: 12
@@ -36,20 +37,26 @@ class BaseService {
     *** handle request
    */
   async fetch(call, callback) {
-    let {options, methodName} = call.request;
-    if (!methodName || !options) {
-      return this.error(callback, 'Service methodName is not provided');
-    }
+    let params = HttpUtil.checkRequiredParams2(call.request, ["options", "methodName"]);
+    if (params.error) return this.response(callback, HttpUtil.createErrorInvalidInput(params.error));
+    let {options, methodName} = params;
     options = options ? JSON.parse(options) : {};
+    let msg;
     if (Utils.isObjectEmpty(options)) {
-      return this.error(callback, 'Params options must be an empty object');
+      msg = HttpUtil.createErrorInvalidInput('Params options must be a non-blank object');
+      return this.response(callback, msg)
     }
     if (!this._methods.includes(methodName)) {
-      return this.error(callback,
-        `Service '${methodName}' is not defined`,
-        statusCode.UNIMPLEMENTED
-      );
+      msg = `Service '${methodName}' is not defined`;
+      return this.error(callback, msg, statusCode.UNIMPLEMENTED)
     }
+    let {secret} = options;
+    if (!secret || !APP_KEY[secret]) {
+      msg = HttpUtil.createError(HttpUtil.METHOD_NOT_ALLOWED, `System is not supported`);
+      return this.response(callback, msg)
+    }
+    options.scope = APP_KEY[secret];
+    delete options.secret;
     return await this[methodName](callback, options)
   }
 

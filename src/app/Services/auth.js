@@ -7,7 +7,6 @@ const HttpUtil = require('../../utils/http');
 const Utils = require('../../utils');
 const Model = require('../Models/User');
 const ModelToken = require('../Models/Token');
-const {APP_KEY} = require('../../config/env/auth');
 const {roles} = require('../../config');
 
 class AuthService extends BaseService {
@@ -26,23 +25,19 @@ class AuthService extends BaseService {
   }
 
   async login(cb, options) {
-    const requireParams = ['username', 'password', 'secret'];
+    const requireParams = ['username', 'password'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
     if (options.error) {
       return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
     }
-    let {username, password, secret} = options;
-    let result;
-    if (!APP_KEY[secret]) {
-      result = HttpUtil.createError(HttpUtil.METHOD_NOT_ALLOWED, `System is not supported`);
-      return this.response(cb, result)
-    }
+    let {username, password, scope} = options;
     let value;
     if (["root", "root@gmail.com"].indexOf(username) > -1) {
       value = username
     } else {
-      value = `${APP_KEY[secret]}.${username}`
+      value = `${scope}.${username}`
     }
+    let result;
     let [err, user] = await to(this.model.getOne({username: value}, true, {}));
     if (err) {
       result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
@@ -68,22 +63,17 @@ class AuthService extends BaseService {
   }
 
   async register(cb, options) {
-    const requireParams = ['email', 'name', 'password', 'secret'];
+    const requireParams = ['email', 'name', 'password'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
     if (options.error) {
       return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
     }
-    let {email, name, password, secret} = options;
+    let {email, name, password, scope} = options;
     let result;
-    if (!APP_KEY[secret]) {
-      result = HttpUtil.createError(HttpUtil.METHOD_NOT_ALLOWED, `System is not supported`);
-      return this.response(cb, result)
-    }
     if (["root", "root@gmail.com"].indexOf(email) > -1) {
       result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Unique.user.email', email)
       return this.response(cb, result)
     }
-    let scope = APP_KEY[secret];
     let username = `${scope}.${email}`;
     let [err, user] = await to(this.model.getOne({username: username}));
     if (err) {
