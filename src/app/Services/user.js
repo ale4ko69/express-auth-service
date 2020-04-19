@@ -29,7 +29,7 @@ class Service extends BaseService {
     if (options.error) {
       return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
     }
-    const acceptFields = [...requireParams, 'address', 'phone', 'company', 'customer'];
+    const acceptFields = [...requireParams, 'address', 'phone', 'company', 'agency', 'customer'];
     options = Utils.getAcceptableFields(options, acceptFields);
     let {email, password, scope} = options;
     let result;

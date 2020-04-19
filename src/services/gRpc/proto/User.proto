@@ -4,6 +4,19 @@ message Empty {}
 message Subject {
     string _id = 1;
     string email = 2;
+    string name = 3;
+    string role = 4;
+    string address = 5;
+    string phone = 6;
+    string company = 7;
+    string agency = 8;
+    string customer = 9;
+    TimeStamp insert = 10;
+    TimeStamp update = 11;
+    TimeStamp delete = 12;
+}
+message TimeStamp {
+    string when = 1;
 }
 message Request {
     string options = 1;

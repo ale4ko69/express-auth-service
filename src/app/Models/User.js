@@ -46,6 +46,10 @@ const FIELDS = {
     type: Schema.ObjectId,
     index: true
   },
+  agency: {
+    type: Schema.ObjectId,
+    index: true
+  },
   customer: {
     type: Schema.ObjectId,
     index: true
@@ -73,7 +77,7 @@ const FIELDS = {
   }
 }
 
-const allowField = ['_id', 'email', 'name', 'role', 'phone', 'company', 'customer', 'insert', 'update'];
+const allowField = ['_id', 'email', 'name', 'role', 'phone', 'company', 'agency', 'customer', 'insert', 'update'];
 const methods = {
   getFields: function (fields = allowField) {
     return Utils.fillOptionalFields(this, {}, fields);

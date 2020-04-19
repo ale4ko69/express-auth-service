@@ -43,7 +43,6 @@ module.exports = {
       email: user.email,
       name: user.name,
       role: user.role,
-      company: user.company,
       exp: parseInt(expiry.getTime() / 1000),
     }, SECRET_KEY); // DO NOT KEEP YOUR SECRET IN THE CODE!
   },
