@@ -53,7 +53,7 @@ class AuthService extends BaseService {
       return this.response(cb, result)
     }
     let token = AuthUtil.generateJwt(user);
-    [err, result] = await to(this.mToken.insertOne({user: user._id, token: token}));
+    [err, result] = await to(this.mToken.insertItem({user: user._id, token: token}));
     if (err) {
       result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.login', err.message)
     } else {
@@ -87,7 +87,7 @@ class AuthService extends BaseService {
     }
     let {salt, hash} = AuthUtil.setPassword(password);
     let obj = {email, name, username, scope, role: roles.guest, salt, hash};
-    [err, user] = await to(this.model.insertOne(obj));
+    [err, user] = await to(this.model.insertItem(obj));
     if (err) {
       result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.register', err.message);
       return this.response(cb, result)
@@ -95,7 +95,7 @@ class AuthService extends BaseService {
     user = user.getFields();
     user = Utils.cloneObject(user);
     let token = AuthUtil.generateJwt(user);
-    [err, result] = await to(this.mToken.insertOne({user: user._id, token: token}));
+    [err, result] = await to(this.mToken.insertItem({user: user._id, token: token}));
     if (err) {
       result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.login', err.message)
     } else {
@@ -130,7 +130,7 @@ class AuthService extends BaseService {
     }
     let objUpdate = AuthUtil.setPassword(new_password);
     [err, result] = await to(Promise.all([
-      this.model.updateOne(user._id, objUpdate),
+      this.model.updateItem(user._id, objUpdate),
       this.mToken.deleteByCondition({user: user._id})
     ]));
     if (err) {
@@ -162,7 +162,7 @@ class AuthService extends BaseService {
     }
     let objUpdate = AuthUtil.setPassword(new_password);
     [err, result] = await to(Promise.all([
-      this.model.updateOne(user._id, objUpdate),
+      this.model.updateItem(user._id, objUpdate),
       this.mToken.deleteByCondition({user: user._id})
     ]));
     if (err) {

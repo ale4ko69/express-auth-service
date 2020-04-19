@@ -47,7 +47,7 @@ class Service extends BaseService {
     delete options.password;
 
     let obj = {...options, username, scope, salt, hash};
-    [err, user] = await to(this.model.insertOne(obj));
+    [err, user] = await to(this.model.insertItem(obj));
     if (err) {
       result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.create', err.message)
     } else {

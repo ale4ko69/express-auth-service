@@ -117,7 +117,7 @@ module.exports = (fields, projection = {}, methods = null, joins = []) => {
       // return await this.countDocuments(condition) // version mongoose 5.8.3
     },
 
-    async insertOne(obj, authUser = null) {
+    async insertItem(obj, authUser = null) {
       obj.insert = {
         when: Date.now(),
         by: authUser ? authUser._id : undefined
@@ -131,7 +131,7 @@ module.exports = (fields, projection = {}, methods = null, joins = []) => {
       return await this.update(condition, data, {multi: multi})
     },
 
-    async updateOne(_id, data, dataUnset = {}, authUser = null) {
+    async updateItem(_id, data, dataUnset = {}, authUser = null) {
       data.update = {
         when: Date.now(),
         by: authUser ? authUser._id : undefined
