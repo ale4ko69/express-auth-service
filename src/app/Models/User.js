@@ -8,7 +8,7 @@ const BaseSchema = require('./BaseSchema');
 const {roles} = require('../../config');
 const Utils = require('../../utils');
 const mTAG = 'User'
-const projection = {__v: 0, delete: 0, hash: 0, salt: 0, scope: 0};
+const projection = {__v: 0, delete: 0, hash: 0, salt: 0, scope: 0, username: 0};
 
 const FIELDS = {
   email: {

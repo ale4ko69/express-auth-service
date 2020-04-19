@@ -8,6 +8,7 @@ const Utils = require('../../utils');
 const Model = require('../Models/User');
 const ModelToken = require('../Models/Token');
 const {roles} = require('../../config');
+const FIELD_NOT_ALLOWS = ['__v', 'hash', 'salt', 'scope', 'username', 'update', 'insert'];
 
 class AuthService extends BaseService {
   constructor() {
@@ -56,7 +57,7 @@ class AuthService extends BaseService {
     if (err) {
       result = HttpUtil.createError(HttpUtil.INTERNAL_SERVER_ERROR, 'Errors.login', err.message)
     } else {
-      ['__v', 'hash', 'salt', 'scope', 'update', 'insert'].forEach(field => delete user[field]);
+      FIELD_NOT_ALLOWS.forEach(field => delete user[field]);
       result = {data: {token, user}}
     }
     return this.response(cb, result)
@@ -182,7 +183,7 @@ class AuthService extends BaseService {
     if (err) {
       result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.general', err.message)
     } else {
-      if (!result || Utils.isString(result.user) || result.expiredAt <= Date.now()) {
+      if (!result || Utils.isString(result.user) || parseInt(result.expiredAt) <= Date.now()) {
         result = HttpUtil.createError(HttpUtil.UNAUTHORIZED, 'unauthorized')
       } else {
         result = {data: {token: result.token, authUser: result.user}}
