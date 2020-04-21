@@ -4,7 +4,7 @@ const to = require('await-to-js').default;
 const AuthUtil = require('../../utils/auth');
 const HttpUtil = require('../../utils/http');
 const Utils = require('../../utils');
-const BaseService = require('./GRPC');
+const BaseService = require('./base');
 const Model = require('../Models/User');
 const ModelToken = require('../Models/Token');
 

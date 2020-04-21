@@ -1,6 +1,6 @@
 'use strict'
 
-const BaseService = require('./GRPC');
+const BaseService = require('./base');
 const to = require('await-to-js').default;
 const AuthUtil = require('../../utils/auth');
 const HttpUtil = require('../../utils/http');
