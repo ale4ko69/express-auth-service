@@ -39,7 +39,7 @@ class BaseService {
     if (sorts.length) {
       options = DBUtil.setSortConditions(options, sorts)
     }
-    
+
     let [err, rs] = await to(Promise.all([
       this.model.lists(options),
       this.model.getCount(options.filters)
@@ -80,8 +80,7 @@ class BaseService {
   }
 
   async detail(cb, options) {
-    let {params} = options;
-    let [err, rs] = await to(this.model.getOne({_id: params}, true));
+    let [err, rs] = await to(this.model.getOne(options, true));
     if (err) {
       rs = {code: HttpUtil.INTERNAL_SERVER_ERROR, message: err.message}
     } else {
@@ -103,7 +102,7 @@ class BaseService {
 
   async update(cb, options) {
     let {condition, data, multi = false} = options;
-    let [err, rs] = await to(this.model.update(condition, data, multi));
+    let [err, rs] = await to(this.model.update(condition, data, {multi: multi}));
     if (err) {
       rs = {code: HttpUtil.INTERNAL_SERVER_ERROR, message: err.message}
     } else {
