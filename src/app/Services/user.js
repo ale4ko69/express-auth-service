@@ -78,7 +78,7 @@ class Service extends BaseService {
     let actions = [
       this.mToken.deleteByCondition({user: user._id})
     ];
-    if (softDelete) {
+    if (!softDelete) {
       actions.push(this.model.deleteByCondition({_id: user._id}))
     } else {
       actions.push(this.model.softDeletes({_id: user._id}))
