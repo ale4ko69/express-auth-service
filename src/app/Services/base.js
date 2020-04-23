@@ -12,7 +12,7 @@ const statusCode = {
 
 class BaseService {
   constructor(child) {
-    this._methods = [];
+    this._methods = ["detail", "filters", "update"];
     this.bindingMethods = this.bindingMethods.bind(this);
     this.bindingMethods(child);
   }
@@ -105,7 +105,7 @@ class BaseService {
   bindingMethods(obj) {
     let methods = Object.getOwnPropertyNames(obj.prototype);
     methods = methods.filter(x => (x !== 'constructor' && x !== 'bindingMethods'));
-    this._methods = methods;
+    this._methods = [...this._methods, ...methods];
     for (const method of methods) {
       this[method] = this[method].bind(this);
     }
