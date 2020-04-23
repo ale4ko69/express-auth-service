@@ -36,7 +36,7 @@ const FIELDS = {
 }
 
 const arrayJoin = [
-  {path: 'user', select: 'email name role address phone company customer'},
+  {path: 'user', select: 'email name role address phone company agency customer'},
 ];
 
 let tableSchema = BaseSchema(FIELDS, projection, null, arrayJoin);
