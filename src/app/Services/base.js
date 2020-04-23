@@ -20,10 +20,29 @@ class BaseService {
   async lists(call, callback) {
     let {options} = call.request;
     options = options ? JSON.parse(options) : {};
-    const {page, perPage, filters = {}} = options;
+    let {page, perPage, conditions = {}, filters = [], sorts = [], secret} = options;
+    if (!secret || !APP_KEY[secret]) {
+      let msg = HttpUtil.createError(HttpUtil.METHOD_NOT_ALLOWED, `System is not supported`);
+      return this.response(callback, msg)
+    }
+
+    conditions.scope = APP_KEY[secret];
+    options = {
+      page: page,
+      perPage: perPage,
+      filters: conditions,
+      sorts: null
+    }
+    if (filters.length) {
+      options = DBUtil.setFilters(options, filters)
+    }
+    if (sorts.length) {
+      options = DBUtil.setSortConditions(options, sorts)
+    }
+    
     let [err, rs] = await to(Promise.all([
       this.model.lists(options),
-      this.model.getCount(filters)
+      this.model.getCount(options.filters)
     ]));
     if (err) {
       rs = {code: HttpUtil.INTERNAL_SERVER_ERROR, message: err.message}
