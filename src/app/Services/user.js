@@ -59,13 +59,13 @@ class Service extends BaseService {
   }
 
   async destroy(cb, options) {
-    const requireParams = ['userId', 'softDelete'];
+    const requireParams = ['userId'];
     options = HttpUtil.checkRequiredParams2(options, requireParams);
     if (options.error) {
       return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
     }
     let result;
-    let {userId, softDelete} = options;
+    let {userId, softDelete = false} = options;
     let [err, user] = await to(this.model.getOne({_id: userId}, false, {}));
     if (err) {
       result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
@@ -78,7 +78,7 @@ class Service extends BaseService {
     let actions = [
       this.mToken.deleteByCondition({user: user._id})
     ];
-    if (softDelete && softDelete === "true") {
+    if (softDelete) {
       actions.push(this.model.deleteByCondition({_id: user._id}))
     } else {
       actions.push(this.model.softDeletes({_id: user._id}))
