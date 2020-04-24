@@ -148,10 +148,8 @@ class AuthService extends BaseService {
       return this.response(cb, HttpUtil.createErrorInvalidInput(options.error));
     }
     let result;
-    let {userId, new_password, type = null} = options;
-    let condition = {_id: userId};
-    if (type) condition[type] = userId;
-    let [err, user] = await to(this.model.getOne(condition, false, {}));
+    let {userId, new_password} = options;
+    let [err, user] = await to(this.model.getOne({_id: userId}, false, {}));
     if (err) {
       result = HttpUtil.createError(HttpUtil.UNPROCESSABLE_ENTITY, 'Found_Errors.user', err.message);
       return this.response(cb, result)
