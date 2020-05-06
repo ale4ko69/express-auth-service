@@ -4,7 +4,7 @@ const to = require('await-to-js').default;
 const DBUtil = require('../../utils/Database');
 const HttpUtil = require('../../utils/http');
 const Utils = require('../../utils');
-const {APP_KEY} = require('../../config/env/auth');
+const {APP_KEY} = require('../../config');
 const statusCode = {
   INVALID_ARGUMENT: 3,
   UNIMPLEMENTED: 12

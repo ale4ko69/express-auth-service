@@ -11,5 +11,10 @@
     "admin": "admin",
     "guest": "guest"
   },
-  "passwordDefault": "123456"
+  "passwordDefault": "123456",
+  "APP_KEY": {
+    "4012": "digital",
+    "4014": "advertise",
+    "4016": "campsite"
+  }
 }
